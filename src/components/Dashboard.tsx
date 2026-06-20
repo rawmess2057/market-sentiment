@@ -1,21 +1,19 @@
 'use client'
 
-import { useEffect, useCallback, useState } from 'react'
+import { useEffect, useCallback } from 'react'
 import { useStore } from '@/store/useStore'
 import { DEFAULT_WATCHLIST } from '@/constants/symbols'
 import { SentimentResult } from '@/lib/types'
 import SearchBar from './SearchBar'
 import SentimentTable from './SentimentTable'
-import DetailPanel from './DetailPanel'
+
 
 export default function Dashboard() {
   const {
-    watchlist, results, selectedSymbol, isLoading, isDetailOpen, lastUpdated, error,
-    addSymbol, removeSymbol, setResults, setSelected, setDetailOpen, setLoading, setError,
+    watchlist, results, selectedSymbol, isLoading, lastUpdated, error,
+    addSymbol, removeSymbol, setResults, setSelected, setLoading, setError,
   } = useStore()
 
-  const [timeframe, setTimeframe] = useState<'intraday' | 'daily'>('intraday')
-  const selectedResult = selectedSymbol ? results[selectedSymbol] ?? null : null
   const hasWatchlist = watchlist.length > 0
 
   // Initialize watchlist
@@ -58,11 +56,6 @@ export default function Dashboard() {
     const interval = setInterval(fetchAll, 60_000)
     return () => clearInterval(interval)
   }, [hasWatchlist])
-
-  function handleSelect(symbol: string) {
-    setSelected(symbol)
-    setDetailOpen(true)
-  }
 
   function handleSymbolAdd(symbol: string) {
     addSymbol(symbol)
@@ -139,7 +132,7 @@ export default function Dashboard() {
               <SentimentTable
                 results={resultArray}
                 selected={selectedSymbol}
-                onSelect={handleSelect}
+                onSelect={setSelected}
                 onRemove={removeSymbol}
               />
             </div>
@@ -152,14 +145,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Detail Panel */}
-      <DetailPanel
-        result={selectedResult}
-        open={isDetailOpen && selectedResult != null}
-        onClose={() => setDetailOpen(false)}
-        timeframe={timeframe}
-        onTimeframeChange={setTimeframe}
-      />
     </div>
   )
 }

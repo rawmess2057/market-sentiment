@@ -4,7 +4,6 @@ import { motion } from 'framer-motion'
 import { SentimentResult } from '@/lib/types'
 import SentimentBar from './SentimentBar'
 import Sparkline from './Sparkline'
-import ConvictionBadge from './ConvictionBadge'
 import PhaseLabel from './PhaseLabel'
 
 interface Props {
@@ -23,12 +22,10 @@ export default function SentimentTable({ results, selected, onSelect, onRemove }
         <thead>
           <tr className="text-[11px] font-semibold text-[#475569] uppercase tracking-wider border-b border-white/5 sticky top-0 z-10" style={{ backgroundColor: 'var(--bg-secondary)' }}>
             <th className="text-left py-3 px-3 w-28">Symbol</th>
-            <th className="text-left py-3 px-3 w-36">Intraday</th>
-            <th className="text-left py-3 px-3 w-36">Daily</th>
+            <th className="text-left py-3 px-3 w-44">Intraday</th>
+            <th className="text-left py-3 px-3 w-44">Daily</th>
             <th className="text-left py-3 px-3 w-24">Trend</th>
-            <th className="text-left py-3 px-3 w-28">Phase</th>
-            <th className="text-left py-3 px-3 w-28">Conviction</th>
-            <th className="text-left py-3 px-3 w-16">Chop</th>
+            <th className="text-left py-3 px-3 w-24">Phase</th>
             <th className="text-right py-3 px-3 w-8"></th>
           </tr>
         </thead>
@@ -105,19 +102,6 @@ export default function SentimentTable({ results, selected, onSelect, onRemove }
 
                 <td className="py-3 px-3">
                   <PhaseLabel phase={r.daily.phase} size="sm" />
-                </td>
-
-                <td className="py-3 px-3">
-                  <ConvictionBadge conviction={r.overallConviction} />
-                </td>
-
-                <td className="py-3 px-3">
-                  <span className={`text-xs font-semibold ${
-                    r.daily.chop > 0.6 ? 'text-[#f59e0b]' :
-                    r.daily.chop > 0.4 ? 'text-[#94a3b8]' : 'text-[#14f5c7]'
-                  }`}>
-                    {r.daily.chop.toFixed(2)}
-                  </span>
                 </td>
 
                 <td className="py-3 px-3 text-right">

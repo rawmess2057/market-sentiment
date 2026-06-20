@@ -266,11 +266,11 @@ function computeConviction(
   if (chop > chopLimit) return 'low'
   if (adx < 18) return 'low'
 
-  const combined = structureScore * 0.55 + momentumScore * 0.15 + emaScore * 0.10 + flowScore * 0.20
+  const combined = structureScore * 0.50 + momentumScore * 0.25 + emaScore * 0.10 + flowScore * 0.15
 
-  if (adx > 30 && combined > 50) return 'high'
-  if (combined > 48) return 'high'
-  if (combined > 36) return 'medium'
+  if (adx > 30 && combined > 48) return 'high'
+  if (combined > 46) return 'high'
+  if (combined > 34) return 'medium'
   return 'low'
 }
 
@@ -341,8 +341,8 @@ export function computePeriodData(candles: Candle[], timeframe: 'intraday' | 'da
   // Candle flow analysis (buying/selling pressure from wick positions)
   const flowScore = computeCandleFlowScore(candles)
 
-  // Blend: structure (55%) + momentum (15%) + EMA (10%) + candleFlow (20%)
-  let finalRaw = structureScore * 0.55 + momentumScore * 0.15 + emaScore * 0.10 + flowScore * 0.20
+  // Blend: structure (50%) + momentum (25%) + EMA (10%) + candleFlow (15%)
+  let finalRaw = structureScore * 0.50 + momentumScore * 0.25 + emaScore * 0.10 + flowScore * 0.15
 
   // Strong trend multiplier: when structure is decisive, amplify further
   if (structureScore < 25) {

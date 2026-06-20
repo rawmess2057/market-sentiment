@@ -64,6 +64,6 @@ export interface SentimentResult {
 export interface SymbolDef {
   symbol: string
   display: string
-  category: 'forex' | 'crypto' | 'stock' | 'index'
+  category: 'forex' | 'crypto' | 'stock' | 'index' | 'commodity'
   yahooTicker: string
 }
