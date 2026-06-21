@@ -18,14 +18,23 @@ export async function POST(request: Request) {
   const session = await auth()
   if (!session?.user?.id) return new NextResponse(null, { status: 401 })
 
-  const body = await request.json()
+  try {
+    const body = await request.json()
+    if (!body.id) delete body.id
 
-  const trade = await prisma.trade.create({
-    data: {
-      ...body,
-      userId: session.user.id,
-    },
-  })
+    const trade = await prisma.trade.create({
+      data: {
+        ...body,
+        userId: session.user.id,
+      },
+    })
 
-  return NextResponse.json({ trade })
+    return NextResponse.json({ trade })
+  } catch (error) {
+    console.error('[POST /api/trades]', error)
+    return NextResponse.json(
+      { error: 'Failed to create trade' },
+      { status: 500 },
+    )
+  }
 }

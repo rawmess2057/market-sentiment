@@ -34,7 +34,7 @@ export default function TradeForm({ initial, onSave, onClose }: Props) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const trade: JournalTrade = {
-      id: initial.id || '',
+      id: initial.id || crypto.randomUUID(),
       includeInAnalysis: form.includeInAnalysis,
       symbol: form.symbol,
       date: form.date,
