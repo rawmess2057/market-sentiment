@@ -18,7 +18,7 @@ export default function Dashboard() {
   const hasWatchlist = watchlist.length > 0
   const fetchingRef = useRef(false)
   const [ready, setReady] = useState(false)
-  const autoRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
   const [searchQuery, setSearchQuery] = useState('')
 
   const fetchBatch = useCallback(async (symbols: string[]) => {
@@ -88,9 +88,6 @@ export default function Dashboard() {
   useEffect(() => {
     if (!ready || !hasWatchlist) return
     fetchAll()
-
-    autoRef.current = setInterval(fetchAll, 180_000)
-    return () => { if (autoRef.current) clearInterval(autoRef.current) }
   }, [ready, hasWatchlist])
 
   const resultArray = watchlist
@@ -179,7 +176,7 @@ export default function Dashboard() {
               ? `Fetching ${resultArray.length}/${watchlist.length} symbols...`
               : searchQuery
                 ? `${filteredResults.length}/${resultArray.length} symbols · filtered`
-                : `Auto-refreshes every 60s · ${resultArray.length} symbols loaded · Data: Yahoo Finance`}
+                : `${resultArray.length} symbols loaded · Data: Yahoo Finance`}
           </div>
         </div>
       </div>
