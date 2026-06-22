@@ -63,26 +63,12 @@ export default function Dashboard() {
       return
     }
 
-    // Phase 1: load hardcoded symbols (skip crypto — live API handles them)
+    // Populate hardcoded symbols
     for (const s of UNIQUE_SYMBOLS) {
-      if (s.category === 'crypto') continue
       addSymbol(s.symbol)
     }
 
-    // Phase 2: fetch crypto list
-    fetch('/api/symbols/crypto')
-      .then(r => r.json())
-      .then(data => {
-        if (data.symbols && Array.isArray(data.symbols)) {
-          for (const s of data.symbols) {
-            addSymbol(s.symbol)
-          }
-        }
-      })
-      .catch(() => {})
-      .finally(() => {
-        setReady(true)
-      })
+    setReady(true)
   }, [])
 
   useEffect(() => {
