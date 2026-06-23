@@ -5,6 +5,7 @@ export interface FFEvent {
   impact: string
   forecast?: string
   previous?: string
+  actual?: string
 }
 
 export async function fetchFFCalendar(): Promise<FFEvent[]> {

@@ -64,6 +64,10 @@ export const useStore = create<StoreState>()(
     {
       name: 'rawfx-watchlist',
       version: 1,
+      migrate: (persisted, version) => {
+        if (version === 0) return { watchlist: [] }
+        return persisted as StoreState
+      },
       partialize: (state) => ({ watchlist: state.watchlist }),
     },
   ),

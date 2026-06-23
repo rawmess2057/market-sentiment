@@ -86,8 +86,11 @@ export default function Dashboard() {
 
   const filteredResults = useMemo(() => {
     if (!searchQuery) return resultArray
-    const q = searchQuery.toLowerCase()
-    return resultArray.filter(r => r.symbol.toLowerCase().includes(q))
+    const q = searchQuery.toLowerCase().replace(/[^a-z0-9]/g, '')
+    return resultArray.filter(r => {
+      const sym = r.symbol.toLowerCase().replace(/[^a-z0-9]/g, '')
+      return sym.includes(q)
+    })
   }, [resultArray, searchQuery])
 
   return (

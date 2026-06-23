@@ -3,11 +3,11 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
-import NewsBell from './NewsBell'
 
 const links = [
   { href: '/', label: 'Sentiment' },
   { href: '/journal', label: 'Journal' },
+  { href: '/news', label: 'News' },
 ]
 
 export default function NavBar() {
@@ -37,7 +37,6 @@ export default function NavBar() {
         ))}
       </div>
       <div className="ml-auto flex items-center gap-3">
-        <NewsBell />
         {session?.user ? (
           <div className="flex items-center gap-3">
             {session.user.image && (

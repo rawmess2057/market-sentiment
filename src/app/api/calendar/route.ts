@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-const CACHE_TTL = 5 * 60 * 1000
+const CACHE_TTL = 30 * 60 * 1000
 let cache: { data: unknown[]; ts: number } | null = null
 
 export async function GET() {
@@ -9,7 +9,10 @@ export async function GET() {
   }
   try {
     const res = await fetch('https://nfs.faireconomy.media/ff_calendar_thisweek.json')
-    if (!res.ok) return NextResponse.json([])
+    if (!res.ok) {
+      if (cache) return NextResponse.json(cache.data)
+      return NextResponse.json([])
+    }
     const data: unknown[] = await res.json()
     const filtered = (data as Array<Record<string, string>>).filter(
       e => e.impact === 'High' || e.impact === 'Medium'
@@ -18,6 +21,7 @@ export async function GET() {
     cache = { data: filtered, ts: Date.now() }
     return NextResponse.json(filtered)
   } catch {
-    return NextResponse.json(cache?.data ?? [])
+    if (cache) return NextResponse.json(cache.data)
+    return NextResponse.json([])
   }
 }
