@@ -6,6 +6,7 @@ import { JournalTrade, classifyResult } from '@/lib/journal-types'
 import TradeForm from '@/components/TradeForm'
 import AnalysisTab from '@/components/AnalysisTab'
 import ImageViewer from '@/components/ImageViewer'
+import ConfirmDialog from '@/components/ConfirmDialog'
 
 const defaultTrade: Omit<JournalTrade, 'id'> = {
   includeInAnalysis: true, symbol: '', date: '', time: '', stopLoss: 0, rrSecured: 0,
@@ -24,6 +25,7 @@ export default function JournalView() {
   const [formOpen, setFormOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [selectedTrade, setSelectedTrade] = useState<JournalTrade | null>(null)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
 
   async function handleSave(trade: JournalTrade) {
     if (editingId) {
@@ -208,7 +210,7 @@ export default function JournalView() {
                                       <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                     </svg>
                                   </button>
-                                  <button onClick={e => { e.stopPropagation(); if (confirm('Delete trade?')) deleteTrade(t.id) }} className="text-[#475569] hover:text-[#f43f5e] transition-colors p-0.5">
+                                  <button onClick={e => { e.stopPropagation(); setDeleteConfirmId(t.id) }} className="text-[#475569] hover:text-[#f43f5e] transition-colors p-0.5">
                                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                                     </svg>
@@ -237,6 +239,17 @@ export default function JournalView() {
             onClose={() => { setFormOpen(false); setEditingId(null) }}
           />
         )}
+
+        {/* Delete Confirmation */}
+        <ConfirmDialog
+          open={deleteConfirmId !== null}
+          title="Delete trade?"
+          message="This action cannot be undone."
+          confirmLabel="Delete"
+          variant="danger"
+          onConfirm={() => { if (deleteConfirmId) deleteTrade(deleteConfirmId); setDeleteConfirmId(null) }}
+          onCancel={() => setDeleteConfirmId(null)}
+        />
       </div>
 
       {/* Trade Detail Panel */}
