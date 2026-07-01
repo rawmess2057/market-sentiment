@@ -39,9 +39,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ trade })
   } catch (error) {
-    console.error('[POST /api/trades]', error)
+    const msg = error instanceof Error ? error.message : 'Unknown error'
+    console.error('[POST /api/trades]', msg)
     return NextResponse.json(
-      { error: 'Failed to create trade' },
+      { error: msg },
       { status: 500 },
     )
   }

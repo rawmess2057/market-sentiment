@@ -37,7 +37,7 @@ interface JournalState {
 
   setConfig: (partial: Partial<JournalConfig>) => Promise<void>
 
-  importTrades: (trades: JournalTrade[]) => Promise<void>
+  importTrades: (trades: JournalTrade[]) => Promise<{ imported: number; skipped: number; failed: number }>
   getStats: () => JournalStats
 }
 
@@ -248,24 +248,35 @@ export const useJournalStore = create<JournalState>()(
       importTrades: async (trades) => {
         const { activeJournalId } = get()
         const existing = get().trades
-        const ids = new Set(existing.map(t => t.id))
-        const newTrades = trades.filter(t => !ids.has(t.id))
+        let imported = 0
+        let failed = 0
 
-        for (const trade of newTrades) {
+        for (const raw of trades) {
+          const trade = raw as unknown as Record<string, unknown>
+          const { userId, journalId, criteria5, id, ...clean } = trade
           try {
             const res = await fetch('/api/trades', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ ...trade, journalId: activeJournalId }),
+              body: JSON.stringify({ ...clean, journalId: activeJournalId }),
             })
             if (res.ok) {
               const data = await res.json()
               existing.push(data.trade)
+              imported++
+            } else {
+              const body = await res.json()
+              console.error('[import] POST failed', res.status, body.error)
+              failed++
             }
-          } catch { /* skip */ }
+          } catch (err) {
+            console.error('[import] fetch error', err)
+            failed++
+          }
         }
 
         set({ trades: [...existing] })
+        return { imported, skipped: 0, failed }
       },
 
       /* ---- Stats ---- */

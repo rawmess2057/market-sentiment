@@ -82,7 +82,12 @@ export default function JournalView() {
       const text = await file.text()
       try {
         const data = JSON.parse(text)
-        importTrades(Array.isArray(data) ? data : [data])
+        const result = await importTrades(Array.isArray(data) ? data : [data])
+        const parts: string[] = []
+        if (result.imported > 0) parts.push(`${result.imported} imported`)
+        if (result.skipped > 0) parts.push(`${result.skipped} skipped`)
+        if (result.failed > 0) parts.push(`${result.failed} failed`)
+        alert(`Import complete: ${parts.join(', ') || 'nothing to import'}`)
       } catch { alert('Invalid JSON file') }
     }
     input.click()
