@@ -114,7 +114,7 @@ export function computeStats(trades: JournalTrade[], config: JournalConfig): Jou
   const ev = totalRSecured / total
 
   // Drawdown analysis
-  const sorted = [...analyzed].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  const sorted = [...analyzed].sort((a, b) => new Date(`${a.date}T${a.time}`).getTime() - new Date(`${b.date}T${b.time}`).getTime())
   let balance = config.accountBalance
   let peak = balance
   let maxDdR = 0
@@ -122,7 +122,8 @@ export function computeStats(trades: JournalTrade[], config: JournalConfig): Jou
   let ddSum = 0
   let ddCount = 0
   for (const trade of sorted) {
-    const rInCash = trade.rrSecured * (config.accountBalance * (config.riskPercent / 100) / (trade.stopLoss || 1))
+    const riskCash = config.accountBalance * (config.riskPercent / 100)
+    const rInCash = (trade.rrSecured - config.costsPerTrade) * riskCash
     balance += rInCash
     const dd = peak - balance
     const ddPct = peak === 0 ? 0 : (dd / peak) * 100

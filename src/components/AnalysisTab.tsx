@@ -296,53 +296,71 @@ function PerformanceTables({ trades }: { trades: JournalTrade[] }) {
 
 /* ===== Equity Curve ===== */
 function EquityCurve({ trades, config }: { trades: JournalTrade[]; config: JournalConfig }) {
-  const points = useMemo(() => {
-    const sorted = [...trades].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    const pts: { date: string; balance: number }[] = [{ date: '', balance: config.accountBalance }]
-    let balance = config.accountBalance
+  const curves = useMemo(() => {
+    const sorted = [...trades].sort((a, b) => new Date(`${a.date}T${a.time}`).getTime() - new Date(`${b.date}T${b.time}`).getTime())
+    const initial = config.accountBalance
+    const riskPct = config.riskPercent / 100
+
+    const toPt = (bal: number) => Math.round(bal * 100) / 100
+
+    const fixed: { date: string; balance: number }[] = [{ date: '', balance: initial }]
+    let fixedBal = initial
+    const comp: { date: string; balance: number }[] = [{ date: '', balance: initial }]
+    let compBal = initial
+
     for (const t of sorted) {
-      const rInCash = t.rrSecured * (config.accountBalance * (config.riskPercent / 100) / (t.stopLoss || 1))
-      balance += rInCash
-      pts.push({ date: t.date, balance: Math.round(balance * 100) / 100 })
+      const fixedRiskCash = initial * riskPct
+      const pnlFixed = (t.rrSecured - config.costsPerTrade) * fixedRiskCash
+      fixedBal += pnlFixed
+      fixed.push({ date: t.date, balance: toPt(fixedBal) })
+
+      const compRiskCash = compBal * riskPct
+      const pnlComp = (t.rrSecured - config.costsPerTrade) * compRiskCash
+      compBal += pnlComp
+      comp.push({ date: t.date, balance: toPt(compBal) })
     }
-    return pts
+
+    return { fixed, comp }
   }, [trades, config])
 
-  if (points.length < 2) return null
+  const allPoints = [...curves.fixed, ...curves.comp]
+  if (allPoints.length < 3) return null
 
-  const minBal = Math.min(...points.map(p => p.balance))
-  const maxBal = Math.max(...points.map(p => p.balance))
+  const minBal = Math.min(...allPoints.map(p => p.balance))
+  const maxBal = Math.max(...allPoints.map(p => p.balance))
   const range = maxBal - minBal || 1
   const w = 700
   const h = 140
   const pad = { top: 12, right: 12, bottom: 20, left: 50 }
 
-  function x(i: number) { return pad.left + (i / (points.length - 1)) * (w - pad.left - pad.right) }
+  function x(i: number) { return pad.left + (i / (curves.fixed.length - 1)) * (w - pad.left - pad.right) }
   function y(b: number) { return pad.top + (1 - (b - minBal) / range) * (h - pad.top - pad.bottom) }
 
-  const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i)},${y(p.balance)}`).join(' ')
-  const areaPath = `${linePath} L${x(points.length - 1)},${h - pad.bottom} L${x(0)},${h - pad.bottom} Z`
+  const fixedPath = curves.fixed.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i)},${y(p.balance)}`).join(' ')
+  const compPath = curves.comp.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(i)},${y(p.balance)}`).join(' ')
 
-  const startBal = points[0].balance
-  const endBal = points[points.length - 1].balance
-  const isUp = endBal >= startBal
-  const color = isUp ? '#14f5c7' : '#f43f5e'
-  const fillColor = isUp ? 'rgba(20,245,199,0.08)' : 'rgba(244,63,94,0.08)'
+  const startBal = curves.fixed[0].balance
+  const fixedEnd = curves.fixed[curves.fixed.length - 1].balance
+  const compEnd = curves.comp[curves.comp.length - 1].balance
+  const fixedUp = fixedEnd >= startBal
+  const compUp = compEnd >= startBal
 
   return (
     <div className="glass rounded-xl p-3">
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-[9px] font-semibold text-[#475569] uppercase tracking-wider">Equity Curve</h3>
-        <div className="flex items-center gap-3 text-[9px]">
-          <span className="text-[#475569]">Start: <span className="text-[#f1f5f9]">${startBal.toLocaleString()}</span></span>
-          <span className="text-[#475569]">End: <span className={isUp ? 'text-[#14f5c7]' : 'text-[#f43f5e]'}>${endBal.toLocaleString()}</span></span>
-          <span className={isUp ? 'text-[#14f5c7]' : 'text-[#f43f5e]'}>
-            {isUp ? '+' : ''}{((endBal - startBal) / startBal * 100).toFixed(2)}%
+        <div className="flex items-center gap-4 text-[9px]">
+          <span className="flex items-center gap-1.5">
+            <span className="w-2 h-0.5 rounded bg-[#38bdf8]" />
+            <span className="text-[#475569]">Fixed: <span className={fixedUp ? 'text-[#38bdf8]' : 'text-[#f43f5e]'}>${fixedEnd.toLocaleString()}</span></span>
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2 h-0.5 rounded bg-[#14f5c7]" />
+            <span className="text-[#475569]">Comp: <span className={compUp ? 'text-[#14f5c7]' : 'text-[#f43f5e]'}>${compEnd.toLocaleString()}</span></span>
           </span>
         </div>
       </div>
       <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-auto" preserveAspectRatio="xMidYMid meet">
-        {/* Grid lines */}
         {[0, 0.25, 0.5, 0.75, 1].map(f => {
           const yy = pad.top + (1 - f) * (h - pad.top - pad.bottom)
           const val = minBal + f * range
@@ -355,13 +373,9 @@ function EquityCurve({ trades, config }: { trades: JournalTrade[]; config: Journ
             </g>
           )
         })}
-        {/* Area fill */}
-        <path d={areaPath} fill={fillColor} />
-        {/* Line */}
-        <path d={linePath} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
-        {/* Start/End dots */}
-        <circle cx={x(0)} cy={y(startBal)} r="2" fill={color} />
-        <circle cx={x(points.length - 1)} cy={y(endBal)} r="2" fill={color} />
+        <path d={fixedPath} fill="none" stroke="#38bdf8" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
+        <path d={compPath} fill="none" stroke="#14f5c7" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
+        <circle cx={x(0)} cy={y(startBal)} r="2" fill="#94a3b8" />
       </svg>
     </div>
   )
@@ -370,30 +384,35 @@ function EquityCurve({ trades, config }: { trades: JournalTrade[]; config: Journ
 /* ===== Drawdown Analysis ===== */
 function DrawdownAnalysis({ trades, config }: { trades: JournalTrade[]; config: JournalConfig }) {
   const { drawdowns } = useMemo(() => {
-    const sorted = [...trades].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    const sorted = [...trades].sort((a, b) => new Date(`${a.date}T${a.time}`).getTime() - new Date(`${b.date}T${b.time}`).getTime())
     let balance = config.accountBalance
     let peak = balance
+    let trough = balance
     const ddPeriods: { start: string; end: string; ddPct: number; ddR: number }[] = []
     let ddStart = ''
     let inDD = false
+    const riskPct = config.riskPercent / 100
 
     for (const t of sorted) {
-      const rInCash = t.rrSecured * (config.accountBalance * (config.riskPercent / 100) / (t.stopLoss || 1))
-      balance += rInCash
+      const riskCash = config.accountBalance * riskPct
+      balance += (t.rrSecured - config.costsPerTrade) * riskCash
 
-      if (balance < peak) {
-        if (!inDD) { ddStart = t.date; inDD = true }
-      } else {
+      if (balance > peak) {
         if (inDD) {
-          const ddPct = ((peak - balance + (balance - peak)) / peak) * 100
-          ddPeriods.push({ start: ddStart, end: t.date, ddPct, ddR: peak - balance + (balance - peak) })
+          const ddR = peak - trough
+          ddPeriods.push({ start: ddStart, end: t.date, ddPct: (ddR / peak) * 100, ddR })
           inDD = false
         }
         peak = balance
+        trough = balance
+      } else {
+        if (!inDD) { ddStart = t.date; inDD = true }
+        if (balance < trough) trough = balance
       }
     }
     if (inDD) {
-      ddPeriods.push({ start: ddStart, end: 'Present', ddPct: ((peak - balance) / peak) * 100, ddR: peak - balance })
+      const ddR = peak - trough
+      ddPeriods.push({ start: ddStart, end: 'Present', ddPct: (ddR / peak) * 100, ddR })
     }
 
     return { drawdowns: ddPeriods.slice(-10).reverse() }
